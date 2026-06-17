@@ -12,6 +12,23 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("Today’s Reflection");
   const [view, setView] = useState("landing");
   const [isBreathingOpen, setIsBreathingOpen] = useState(false);
+  const [entries, setEntries] = useState([]);
+
+  useEffect(() => {
+    const savedEntries = window.localStorage.getItem("moodEntries");
+    if (savedEntries) {
+      setEntries(JSON.parse(savedEntries));
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("moodEntries", JSON.stringify(entries));
+  }, [entries]);
+
+  const handleSaveRecord = (record) => {
+    const timestamp = new Date().toISOString();
+    setEntries((prev) => [{ id: timestamp, createdAt: timestamp, ...record }, ...prev]);
+  };
 
   return (
     <div className="min-h-screen w-full font-sans antialiased overflow-x-hidden text-[#1A202C] relative">
@@ -146,7 +163,7 @@ export default function App() {
               <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
                   <h2 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight">
-                    Good morning, Alex!
+                    Good morning!
                   </h2>
                   <p className="text-xs text-gray-400 mt-0.5">How are you feeling today?</p>
                 </div>
@@ -154,8 +171,30 @@ export default function App() {
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
-                  <MoodInput/>
+                  <MoodInput onSaveRecord={handleSaveRecord} />
                 </div>
+
+                <aside className="lg:col-span-1 space-y-4">
+                  <div className="bg-white/80 backdrop-blur-xl p-6 rounded-[2rem] border border-white/60 shadow-xs">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-600 mb-3">Mood entries</h3>
+                    {entries.length === 0 ? (
+                      <p className="text-[12px] text-gray-500">No entries yet. Save your first mood log.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {entries.map((entry) => (
+                          <div key={entry.id} className="rounded-3xl border border-gray-100 bg-gray-50 p-4 text-sm">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-semibold text-gray-700 capitalize">{entry.mood}</span>
+                              <span className="text-[10px] text-gray-400">{new Date(entry.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <p className="text-[11px] text-gray-500 mt-2">{entry.factors.join(", ") || "No factors selected"}</p>
+                            {entry.note && <p className="text-[11px] text-gray-500 mt-1">{entry.note}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </aside>
               </div>
             </main>
           </motion.div>
